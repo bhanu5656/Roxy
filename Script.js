@@ -1,24 +1,102 @@
-function reply() {
-  let text = document.getElementById("feeling").value.toLowerCase().trim();
-  let msg = "";
+// Configuration
+const API_KEY = "PASTE_YOUR_GEMINI_API_KEY_HERE";
+const MODEL_NAME = "gemini-3.6-flash"; // Frontier model as of late 2026
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
-  if (text === "") {
-    msg = "I'm here for you ❤️. Tell me what's on your mind.";
-  } else if (text.includes("sad") || text.includes("cry")) {
-    msg = "I'm sorry you're feeling this way. Remember, every difficult moment passes. I'm here with you ❤️";
-  } else if (text.includes("happy")) {
-    msg = "Aww! I'm so happy for you 😊 Keep smiling and enjoy every moment.";
-  } else if (text.includes("angry") || text.includes("mad")) {
-    msg = "It's okay to feel angry. Take a deep breath, don't react immediately, and give yourself a little time. ❤️";
-  } else if (text.includes("alone")) {
-    msg = "You're never alone. Roxy AI is always here to listen 🤍";
-  } else if (text.includes("love") || text.includes("relationship")) {
-    msg = "A strong relationship grows with trust, respect, honesty, and communication. Talk calmly and listen with your heart. ❤️";
-  } else if (text.includes("yadava")) {
-    msg = "Ha cheppu bgrm 🤌🏻🫠";
-  } else {
-    msg = "I understand. Tell me more about how you're feeling. I'm listening and I'll always try to support you. 💙";
-  }
+// UI Elements
+const chatBox = document.getElementById('chat-box');
+const userInput = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+const loadingIndicator = document.getElementById('loading');
 
-  document.getElementById("answer").innerText = msg;
+// Session-based chat history
+let chatHistory = [];
+
+/**
+ * Appends a message to the chat interface
+ */
+function appendMessage(text, sender) {
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('message', `${sender}-message`);
+    msgDiv.innerText = text;
+    chatBox.appendChild(msgDiv);
+    
+    // Auto-scroll to bottom
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
+
+/**
+ * Handles the communication with Gemini API
+ */
+async function getAIResponse(userMessage) {
+    // Add user message to history
+    chatHistory.push({
+        role: "user",
+        parts: [{ text: userMessage }]
+    });
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: chatHistory })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error?.message || "Something went wrong.");
+        }
+
+        const aiText = data.candidates[0].content.parts[0].text;
+        
+        // Add AI response to history for context
+        chatHistory.push({
+            role: "model",
+            parts: [{ text: aiText }]
+        });
+
+        return aiText;
+
+    } catch (error) {
+        console.error("API Error:", error);
+        return `Error: ${error.message}`;
+    }
+}
+
+/**
+ * Main function to send message
+ */
+async function handleSendMessage() {
+    const message = userInput.value.trim();
+    if (!message) return;
+
+    // UI: Clear input and show user message
+    userInput.value = "";
+    appendMessage(message, 'user');
+
+    // UI: Show loading
+    loadingIndicator.classList.remove('hidden');
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Fetch AI response
+    const aiResponse = await getAIResponse(message);
+
+    // UI: Hide loading and show AI message
+    loadingIndicator.classList.add('hidden');
+    
+    if (aiResponse.startsWith("Error:")) {
+        appendMessage(aiResponse, 'error');
+    } else {
+        appendMessage(aiResponse, 'ai');
+    }
+}
+
+// Event Listeners
+sendBtn.addEventListener('click', handleSendMessage);
+
+userInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        handleSendMessage();
+    }
+});
