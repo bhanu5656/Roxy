@@ -1,61 +1,24 @@
-const API_KEY = "AQ.Ab8RN6KUYec_XD_5sYwHW0irdCFIAqFJCk_JA-PahkwzPtg8XA";
+function reply() {
+  let text = document.getElementById("feeling").value.toLowerCase().trim();
+  let msg = "";
 
-async function reply() {
-  const input = document.getElementById("feeling").value;
-  const output = document.getElementById("answer");
-
-  if (input.trim() === "") {
-    output.innerText = "Please share your feelings ❤️";
-    return;
+  if (text === "") {
+    msg = "I'm here for you ❤️. Tell me what's on your mind.";
+  } else if (text.includes("sad") || text.includes("cry")) {
+    msg = "I'm sorry you're feeling this way. Remember, every difficult moment passes. I'm here with you ❤️";
+  } else if (text.includes("happy")) {
+    msg = "Aww! I'm so happy for you 😊 Keep smiling and enjoy every moment.";
+  } else if (text.includes("angry") || text.includes("mad")) {
+    msg = "It's okay to feel angry. Take a deep breath, don't react immediately, and give yourself a little time. ❤️";
+  } else if (text.includes("alone")) {
+    msg = "You're never alone. Roxy AI is always here to listen 🤍";
+  } else if (text.includes("love") || text.includes("relationship")) {
+    msg = "A strong relationship grows with trust, respect, honesty, and communication. Talk calmly and listen with your heart. ❤️";
+  } else if (text.includes("yadava")) {
+    msg = "Ha cheppu bgrm 🤌🏻🫠";
+  } else {
+    msg = "I understand. Tell me more about how you're feeling. I'm listening and I'll always try to support you. 💙";
   }
 
-  output.innerText = "Roxy AI is thinking...";
-
-  const prompt = `
-You are Roxy AI, a caring and friendly emotional support assistant.
-
-Rules:
-- Reply like a close friend.
-- Comfort users when they are sad or angry.
-- Give relationship advice politely.
-- Encourage users with positive words.
-- If someone says "yadava", reply exactly:
-"Ha cheppu bgrm 🤌🏻🫠"
-- Never judge the user.
-- Keep replies short, warm and natural.
-- Answer any question kindly.
-
-User: ${input}
-`;
-
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
-            }
-          ]
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    output.innerText =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "Sorry, I couldn't generate a reply.";
-  } catch (e) {
-    output.innerText = "Connection error. Please try again.";
-  }
+  document.getElementById("answer").innerText = msg;
 }
